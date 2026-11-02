@@ -3,126 +3,61 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Kartenzentrierung</title>
-<meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="Misst das Centering von Pokémon-Karten anhand eines Fotos und ordnet es PSA, BGS und CGC zu.">
+<title>Pokemon-stuff</title>
+<meta name="description" content="Sammlung eigener Web-Tools rund um Pokémon-Karten.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<style>
+  /* Übersicht der Apps im Repo, gleiche Gestaltung wie die Kartenzentrierung */
+  :root {
+    --bg: #edf0f3; --surface: #ffffff; --ink: #121a24; --muted: #5a6573; --line: #d3d9e0; --accent: #2448c8;
+    --f-display: "Big Shoulders Display", "Arial Narrow", sans-serif;
+    --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0f1419; --surface: #161d25; --ink: #e5eaf0; --muted: #94a1af; --line: #2b3642; --accent: #8aa5ff; color-scheme: dark; }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--f-body);
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 24px 40px;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+  h1 { font: 800 clamp(1.8rem, 7vw, 2.6rem)/1 var(--f-display); text-transform: uppercase; letter-spacing: 0.02em; margin: 0; }
+  header p { margin: 6px 0 0; color: var(--muted); }
+  .apps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+  .app a {
+    display: flex; flex-direction: column; gap: 6px; height: 100%;
+    padding: 16px; border: 2px solid var(--ink); border-radius: 6px; background: var(--surface);
+    color: inherit; text-decoration: none;
+  }
+  .app a:hover, .app a:focus-visible { border-color: var(--accent); outline: none; }
+  .app h2 { margin: 0; font: 800 1.4rem/1.1 var(--f-display); text-transform: uppercase; letter-spacing: 0.02em; }
+  .app p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+  .app .go { margin-top: auto; padding-top: 6px; font: 500 0.75rem var(--f-mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); }
+</style>
 </head>
 <body>
 <div class="wrap">
-
-  <header class="label">
-    <div class="label-name">
-      <h1>Kartenzentrierung</h1>
-      <p>Foto hochladen, Ränder prüfen, Centering ablesen.</p>
-    </div>
-    <dl class="label-meta">
-      <dt>Format</dt><dd>63 × 88 mm</dd>
-      <dt>Grader</dt><dd>PSA · BGS · CGC</dd>
-      <dt>Verarbeitung</dt><dd>lokal im Browser</dd>
-    </dl>
+  <header>
+    <h1>Pokemon-stuff</h1>
+    <p>Eigene Web-Tools rund um Pokémon-Karten. Alles läuft direkt im Browser.</p>
   </header>
 
-  <main class="main">
-    <section class="work" aria-label="Arbeitsfläche">
-      <div class="bar-row">
-        <div class="seg" role="tablist" aria-label="Kartenseite">
-          <button id="tab-front" role="tab" data-side="front" aria-selected="true"><span class="dot" id="dot-front"></span>Vorderseite</button>
-          <button id="tab-back" role="tab" data-side="back" aria-selected="false"><span class="dot" id="dot-back"></span>Rückseite</button>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <label class="btn primary" for="file">Foto wählen</label>
-          <input id="file" type="file" accept="image/*" hidden>
-          <button class="btn" id="autoBtn" type="button">Neu erkennen</button>
-        </div>
-      </div>
-
-      <div class="stage" id="stage">
-        <canvas id="view" tabindex="0" aria-label="Kartenfoto mit Messlinien. Linie anklicken und ziehen oder mit Pfeiltasten verschieben."></canvas>
-        <canvas class="loupe r" id="loupe" width="300" height="300" hidden></canvas>
-        <div class="badge" id="badge" hidden>Beispielkarte</div>
-        <div class="empty" id="empty" hidden>
-          <strong>Noch kein Foto für diese Seite</strong>
-          <span>Foto hierher ziehen oder „Foto wählen“ tippen.</span>
-        </div>
-        <div class="busy" id="busy" hidden>Kanten werden gesucht …</div>
-      </div>
-
-      <div class="tools">
-        <div class="range">
-          <label for="rotation">Drehung</label>
-          <input id="rotation" type="range" min="-10" max="10" step="0.05" value="0">
-          <output id="rotationOut" for="rotation">0,00°</output>
-        </div>
-        <span class="legend"><span><i style="background:var(--outer)"></i>Kartenkante</span><span><i style="background:var(--inner)"></i>Innenrahmen</span></span>
-      </div>
-      <p class="hint" id="hint">Jede Kante hat zwei Punkte: Punkt ziehen, um eine Kante schräg zu stellen, Linie ziehen, um sie parallel zu verschieben. Ausgewähltes mit den Pfeiltasten feinjustieren (Umschalt = größere Schritte), N wählt den nächsten Punkt. Bilder lassen sich auch hineinziehen oder mit Strg+V einfügen.</p>
-    </section>
-
-    <aside class="panel" aria-label="Ergebnis">
-      <h2><span id="sideTitle">Vorderseite</span><span class="chip" id="conf">–</span></h2>
-
-      <div class="mode-row">
-        <span class="mode-label" id="modeLabel">Wertung</span>
-        <div class="seg" role="group" aria-labelledby="modeLabel">
-          <button id="modeMean" type="button" data-mode="mean" aria-pressed="true">Mittelwert</button>
-          <button id="modeWorst" type="button" data-mode="worst" aria-pressed="false">Schlechteste Stelle</button>
-        </div>
-      </div>
-
-      <div class="axis">
-        <div class="axis-head"><span class="axis-name">Links / Rechts<span class="where" id="lrWhere"></span></span><span class="ratio" id="lrValue">–</span></div>
-        <div class="scale"><div class="scale-track"></div><div class="scale-zone z9"></div><div class="scale-zone z10"></div><div class="scale-mid"></div><div class="scale-mark" id="lrMark" style="left:50%"></div></div>
-        <div class="scale-ends"><span>links breiter</span><span>rechts breiter</span></div>
-        <div class="mm" id="lrMm">–</div>
-        <div class="mm ends" id="lrEnds"></div>
-      </div>
-
-      <div class="axis">
-        <div class="axis-head"><span class="axis-name">Oben / Unten<span class="where" id="tbWhere"></span></span><span class="ratio" id="tbValue">–</span></div>
-        <div class="scale"><div class="scale-track"></div><div class="scale-zone z9"></div><div class="scale-zone z10"></div><div class="scale-mid"></div><div class="scale-mark" id="tbMark" style="left:50%"></div></div>
-        <div class="scale-ends"><span>oben breiter</span><span>unten breiter</span></div>
-        <div class="mm" id="tbMm">–</div>
-        <div class="mm ends" id="tbEnds"></div>
-      </div>
-
-      <div class="skew" id="skewBlock">
-        <h2><span>Randverlauf</span><span class="chip" id="tiltChip">–</span></h2>
-        <div class="skew-body">
-          <svg id="skewSvg" viewBox="-6 -6 75 100" role="img" aria-label="Schema der Karte mit überhöhter Abweichung des Innenrahmens"></svg>
-          <table class="taper" id="taper">
-            <thead><tr><th>Rand</th><th>Stelle 1</th><th>Stelle 2</th><th>Δ mm</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <p class="note">Randbreite in mm an zwei Stellen je Seite, bei 20 % und 80 % der Kantenlänge (Stelle 1 = oben bzw. links). Im Schema ist die Abweichung 8-fach überhöht.</p>
-      </div>
-
-      <div style="overflow-x:auto">
-        <table class="grades" id="grades">
-          <thead><tr><th>Grader</th><th>Vorne</th><th>Hinten</th><th>Centering</th></tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-
-      <p class="note">Grüne Zone auf den Skalen: 45–55 % (PSA-10-Fenster vorne). Die Notengrenzen sind Richtwerte; offiziell veröffentlicht ist vor allem PSA 10 mit 55/45 vorne und 75/25 hinten. Das Ergebnis bewertet nur das Centering, nicht Ecken, Kanten oder Oberfläche.</p>
-
-      <ul class="tips">
-        <li><b>Gerade von oben</b> fotografieren, Handy parallel zur Karte. Schräge Aufnahmen verfälschen das Ergebnis.</li>
-        <li><b>Kontrastreicher Hintergrund</b> (dunkel bei gelbem Rand) hilft der Erkennung.</li>
-        <li><b>Scanner</b> liefern die genauesten Werte.</li>
-      </ul>
-    </aside>
-  </main>
+  <!-- Neue App: Ordner anlegen und hier einen weiteren <li> eintragen -->
+  <ul class="apps">
+    <li class="app">
+      <a href="kartenzentrierung/">
+        <h2>Kartenzentrierung</h2>
+        <p>Foto hochladen und das Centering messen, mit Noten für PSA, BGS und CGC.</p>
+        <span class="go">Öffnen →</span>
+      </a>
+    </li>
+  </ul>
 </div>
-
-<script src="js/detect.js"></script>
-<script src="js/grading.js"></script>
-<script src="js/geometry.js"></script>
-<script src="js/sample.js"></script>
-<script src="js/app.js"></script>
 </body>
 </html>
