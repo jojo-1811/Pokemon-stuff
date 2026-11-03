@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Preisabfrage – Cardmarket</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <a class="back" href="../">← Pokemon-Stuff</a>
+    <h1>Preisabfrage</h1>
+    <p class="muted">Pokémon-Karte suchen, Cardmarket-Preise ansehen und die passenden Angebote öffnen.</p>
+  </header>
+
+  <form id="search" autocomplete="off">
+    <label class="grow">Karte
+      <input name="q" type="search" placeholder="z. B. Glurak ex, Trade Please!">
+    </label>
+    <label class="grow">Set
+      <input name="set" type="search" list="setlist" placeholder="z. B. 151, Prismatische Entwicklungen">
+      <datalist id="setlist"></datalist>
+    </label>
+    <label class="narrow">Nummer
+      <input name="number" type="text" placeholder="z. B. 6">
+    </label>
+    <label>Sprache
+      <select name="language"></select>
+    </label>
+    <label>Herkunft
+      <select name="origin"></select>
+    </label>
+    <label>Zustand ab
+      <select name="minCondition"></select>
+    </label>
+    <button type="submit">Suchen</button>
+  </form>
+  <p class="hint muted small">
+    Karte, Set oder beides eingeben. Nur Set: alle Karten des Sets.
+    <button type="button" id="browse-sets" class="link">Alle Sets anzeigen</button>
+  </p>
+
+  <p id="status" class="muted" role="status"></p>
+  <p id="direct" class="direct" hidden></p>
+  <section id="setinfo" hidden></section>
+  <section id="detail" hidden></section>
+  <section id="results"></section>
+
+  <footer class="muted small">
+    Kartendaten, Bilder und Preise: <a href="https://tcgdex.dev" target="_blank" rel="noopener">TCGdex</a>.
+    Preise: Cardmarket-Preisguide. Kein offizielles Angebot von Cardmarket oder The Pokémon Company.
+  </footer>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
