@@ -7,7 +7,7 @@ Eigene Web-Tools rund um Pokémon-Karten. Jede App liegt in einem eigenen Ordner
 | App | Ordner | Link |
 |---|---|---|
 | Kartenzentrierung – misst das Centering aus einem Foto | [`kartenzentrierung/`](kartenzentrierung/) | [öffnen](https://jojo-1811.github.io/Pokemon-stuff/kartenzentrierung/) |
-| Preisabfrage - macht Kartenfinden auf Cardmarket einfacher | [`preisfindung/`] (preisfindung/) |[öffnen](https://jojo-1811.github.io/Pokemon-stuff/preisfindung/) |
+| Preisabfrage - macht Kartenfinden auf Cardmarket einfacher | [`preisfindung/`](preisfindung/) |[öffnen](https://jojo-1811.github.io/Pokemon-stuff/preisfindung/) |
 
 ## Neue App hinzufügen
 
