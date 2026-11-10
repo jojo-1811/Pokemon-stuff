@@ -66,6 +66,15 @@
       <h2><span id="sideTitle">Vorderseite</span><span class="chip" id="conf">–</span></h2>
 
       <div class="mode-row">
+        <span class="mode-label" id="typeLabel">Kartentyp</span>
+        <div class="seg" role="group" aria-labelledby="typeLabel">
+          <button id="typeStandard" type="button" data-type="standard" aria-pressed="true">Standard</button>
+          <button id="typeEreader" type="button" data-type="ereader" aria-pressed="false">e-Reader</button>
+        </div>
+      </div>
+      <p class="type-note" id="typeNote" hidden></p>
+
+      <div class="mode-row">
         <span class="mode-label" id="modeLabel">Wertung</span>
         <div class="seg" role="group" aria-labelledby="modeLabel">
           <button id="modeMean" type="button" data-mode="mean" aria-pressed="true">Mittelwert</button>
@@ -74,17 +83,17 @@
       </div>
 
       <div class="axis">
-        <div class="axis-head"><span class="axis-name">Links / Rechts<span class="where" id="lrWhere"></span></span><span class="ratio" id="lrValue">–</span></div>
+        <div class="axis-head"><span class="axis-name"><span id="lrName">Links / Rechts</span><span class="where" id="lrWhere"></span></span><span class="ratio" id="lrValue">–</span></div>
         <div class="scale"><div class="scale-track"></div><div class="scale-zone z9"></div><div class="scale-zone z10"></div><div class="scale-mid"></div><div class="scale-mark" id="lrMark" style="left:50%"></div></div>
-        <div class="scale-ends"><span>links breiter</span><span>rechts breiter</span></div>
+        <div class="scale-ends"><span id="lrEndA">links breiter</span><span id="lrEndB">rechts breiter</span></div>
         <div class="mm" id="lrMm">–</div>
         <div class="mm ends" id="lrEnds"></div>
       </div>
 
       <div class="axis">
-        <div class="axis-head"><span class="axis-name">Oben / Unten<span class="where" id="tbWhere"></span></span><span class="ratio" id="tbValue">–</span></div>
+        <div class="axis-head"><span class="axis-name"><span id="tbName">Oben / Unten</span><span class="where" id="tbWhere"></span></span><span class="ratio" id="tbValue">–</span></div>
         <div class="scale"><div class="scale-track"></div><div class="scale-zone z9"></div><div class="scale-zone z10"></div><div class="scale-mid"></div><div class="scale-mark" id="tbMark" style="left:50%"></div></div>
-        <div class="scale-ends"><span>oben breiter</span><span>unten breiter</span></div>
+        <div class="scale-ends"><span id="tbEndA">oben breiter</span><span id="tbEndB">unten breiter</span></div>
         <div class="mm" id="tbMm">–</div>
         <div class="mm ends" id="tbEnds"></div>
       </div>

@@ -161,6 +161,61 @@
     };
   }
 
+  /**
+   * Welche Ränder miteinander verglichen werden.
+   * standard: links ↔ rechts, oben ↔ unten
+   * ereader:  oben ↔ rechts, links ↔ unten (e-Reader-Karten, Vorderseite: Dot-Code
+   *           liegt links und unten, daher werden die Ränder über Eck verglichen)
+   */
+  const PAIRINGS = {
+    standard: [['left', 'right'], ['top', 'bottom']],
+    ereader: [['top', 'right'], ['left', 'bottom']],
+  };
+
+  /** Gegenüberliegende Seiten (gleiche Ausrichtung)? */
+  const opposite = (a, b) => isVertical(a) === isVertical(b);
+
+  /**
+   * Vergleich zweier Ränder je Achse.
+   * Rückgabe je Achse: { a, b, wa, wb, ratio, where, range }
+   *   wa, wb  Randbreiten in px, die gewertet werden
+   *   ratio   Anteil von a in %
+   *   where   [i, j] gewertete Messstellen (nur bei mode 'worst'), sonst null
+   *   range   Anteil von a über alle Messstellen-Kombinationen: [bester, schlechtester]
+   * Bei gegenüberliegenden Rändern werden nur gleiche Messstellen kombiniert
+   * (sie liegen auf derselben Höhe), bei Rändern über Eck alle vier Kombinationen.
+   */
+  function axes(m, pairing, mode) {
+    const pairs = PAIRINGS[pairing] || PAIRINGS.standard;
+    return pairs.map(([a, b]) => {
+      const A = m.sides[a].at, B = m.sides[b].at;
+      const combos = opposite(a, b) ? [[0, 0], [1, 1]] : [[0, 0], [0, 1], [1, 0], [1, 1]];
+      const share = ([i, j]) => (A[i] / (A[i] + B[j])) * 100;
+      const shares = combos.map(share);
+      let wa = m.sides[a].mean, wb = m.sides[b].mean, where = null;
+      if (mode === 'worst') {
+        let k = 0;
+        for (let n = 1; n < combos.length; n++) if (Math.abs(shares[n] - 50) > Math.abs(shares[k] - 50)) k = n;
+        where = combos[k];
+        wa = A[where[0]]; wb = B[where[1]];
+      }
+      return {
+        a, b, wa, wb, where,
+        ratio: (wa / (wa + wb)) * 100,
+        // [am nächsten an 50/50, am weitesten davon entfernt]
+        range: shares.reduce((r, v) => [
+          Math.abs(v - 50) < Math.abs(r[0] - 50) ? v : r[0],
+          Math.abs(v - 50) > Math.abs(r[1] - 50) ? v : r[1],
+        ], [shares[0], shares[0]]),
+      };
+    });
+  }
+
+  /** Achsen in das Format von grading.js (left/right = erste Achse, top/bottom = zweite). */
+  function gradingBorders(ax) {
+    return { left: ax[0].wa, right: ax[0].wb, top: ax[1].wa, bottom: ax[1].wb };
+  }
+
   /** Erzeugt zwei Punkte je Kante aus achsparallelen Rechtecken. */
   function fromRects(outer, inner) {
     const mk = r => {
@@ -175,5 +230,5 @@
     return { outer: mk(outer), inner: mk(inner) };
   }
 
-  return { SIDES, intersect, distToLine, corners, edgeSegment, edgeAngle, measure, meanBorders, bordersFor, endRatios, fromRects, isVertical };
+  return { SIDES, PAIRINGS, intersect, distToLine, corners, edgeSegment, edgeAngle, measure, meanBorders, bordersFor, endRatios, axes, gradingBorders, fromRects, isVertical };
 });

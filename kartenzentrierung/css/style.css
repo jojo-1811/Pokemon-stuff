@@ -94,6 +94,7 @@ body {
 .mode-row { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: space-between; }
 .mode-label { font-size: 0.85rem; color: var(--muted); }
 .mode-row .seg button { font-size: 0.85rem; padding: 5px 12px; }
+.type-note { margin: -8px 0 0; font-size: 0.8rem; color: var(--muted); }
 .where { display: block; font: 500 0.72rem var(--f-mono); color: var(--warn); margin-top: 2px; }
 .where:empty { display: none; }
 .seg .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--line); }

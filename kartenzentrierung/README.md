@@ -15,6 +15,7 @@ Alles läuft lokal im Browser. Es gibt keinen Server, keine Abhängigkeiten und 
 - Feinjustierung per Pfeiltasten (¼ Pixel, mit Umschalt 3 Pixel), `N` springt zum nächsten Punkt
 - Vorder- und Rückseite getrennt messen; die schlechtere Seite begrenzt das Ergebnis
 - Ausgabe als Verhältnis (z. B. 57,7/42,3), Verhältnis an beiden Enden jeder Achse, Randbreite in mm und Note je Grader
+- Umschalter **Kartentyp**: Bei **e-Reader**-Karten werden die Ränder über Eck verglichen, oben mit rechts und links mit unten. Das gilt nur für die Vorderseite, die Rückseite wird normal gemessen
 - Umschalter **Wertung**: Note aus dem Mittelwert beider Messstellen oder aus der **schlechtesten Stelle** je Achse (die Auswahl merkt sich der Browser)
 
 ## Nutzung
@@ -46,6 +47,12 @@ Die Seite wird über GitHub Pages direkt aus diesem Ordner ausgeliefert.
 5. **Centering:** An beiden Stellen wird der senkrechte Abstand zwischen Kartenkante und Innenrahmen gemessen. Für die Note zählt standardmäßig der Mittelwert, wahlweise die schlechtere der beiden Stellen: `links / (links + rechts)` bzw. `oben / (oben + unten)`; die schlechtere Achse bestimmt die Note. Die Werte an den Enden zeigt das Tool zusätzlich an.
 
 Die Erkennung ist eine Hilfe, kein Urteil. Vor allem bei Full-Art-Karten, Karten mit wenig Kontrast oder unruhigem Hintergrund die Linien kontrollieren und notfalls von Hand setzen.
+
+## e-Reader-Karten
+
+Bei e-Reader-Karten (e-Card-Serie) sitzt der Dot-Code im linken und unteren Rand. Deshalb wird das Centering der Vorderseite über Eck gemessen: **oben gegen rechts** und **links gegen unten**. Die Notengrenzen bleiben dieselben. Da oben und rechts nicht auf derselben Höhe liegen, prüft die Wertung „Schlechteste Stelle“ hier alle vier Kombinationen der Messstellen.
+
+Die automatische Erkennung kann am linken und unteren Rand am Dot-Code statt am Bildrahmen hängen bleiben. Diese Linien bei e-Reader-Karten daher kurz kontrollieren.
 
 ## Notengrenzen
 

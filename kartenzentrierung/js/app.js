@@ -29,6 +29,8 @@
     lrEnds: $('lrEnds'), tbEnds: $('tbEnds'), tiltChip: $('tiltChip'), skewSvg: $('skewSvg'),
     taperBody: document.querySelector('#taper tbody'),
     lrWhere: $('lrWhere'), tbWhere: $('tbWhere'),
+    lrName: $('lrName'), tbName: $('tbName'), lrEndA: $('lrEndA'), lrEndB: $('lrEndB'), tbEndA: $('tbEndA'), tbEndB: $('tbEndB'),
+    typeNote: $('typeNote'),
     gradesBody: document.querySelector('#grades tbody'),
   };
 
@@ -40,7 +42,19 @@
     drag: null,
     view: { scale: 1, dpr: 1 },
     mode: 'mean',     // Wertung: 'mean' = Mittelwert, 'worst' = schlechteste Messstelle
+    cardType: 'standard', // 'standard' oder 'ereader' (Ränder über Eck vergleichen)
   };
+  try { if (localStorage.getItem('centering-type') === 'ereader') state.cardType = 'ereader'; } catch (e) { /* ohne Speicher */ }
+
+  // e-Reader-Vergleich gilt nur für die Vorderseite; die Rückseite ist eine normale Kartenrückseite
+  const pairingFor = side => (state.cardType === 'ereader' && side === 'front' ? 'ereader' : 'standard');
+
+  const SIDE_NAME = { left: 'links', right: 'rechts', top: 'oben', bottom: 'unten' };
+  const EDGE_NAME = { left: 'linker Rand', right: 'rechter Rand', top: 'oberer Rand', bottom: 'unterer Rand' };
+  const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
+  /** Name einer Messstelle: auf senkrechten Rändern oben/unten, auf waagrechten links/rechts. */
+  const opp = (a, b) => Geo.isVertical(a) === Geo.isVertical(b);
+  const stationName = (side, i) => (Geo.isVertical(side) ? (i ? 'unten' : 'oben') : (i ? 'rechts' : 'links'));
   try { if (localStorage.getItem('centering-mode') === 'worst') state.mode = 'worst'; } catch (e) { /* ohne Speicher */ }
 
   // ---------- Hilfen ----------
@@ -307,29 +321,54 @@
     el.sideTitle.textContent = state.side === 'front' ? 'Vorderseite' : 'Rückseite';
     const m = measureOf(s);
 
+    const pairing = pairingFor(state.side);
+    const pairs = Geo.PAIRINGS[pairing];
+    const axisEls = [
+      { name: el.lrName, endA: el.lrEndA, endB: el.lrEndB, value: el.lrValue, mark: el.lrMark, mm: el.lrMm, ends: el.lrEnds, where: el.lrWhere },
+      { name: el.tbName, endA: el.tbEndA, endB: el.tbEndB, value: el.tbValue, mark: el.tbMark, mm: el.tbMm, ends: el.tbEnds, where: el.tbWhere },
+    ];
+    pairs.forEach(([a, b], k) => {
+      axisEls[k].name.textContent = `${cap(SIDE_NAME[a])} / ${cap(SIDE_NAME[b])}`;
+      axisEls[k].endA.textContent = `${SIDE_NAME[a]} breiter`;
+      axisEls[k].endB.textContent = `${SIDE_NAME[b]} breiter`;
+    });
+    el.typeNote.hidden = state.cardType !== 'ereader';
+    el.typeNote.textContent = state.side === 'front'
+      ? 'Vorderseite: oben wird mit rechts verglichen, links mit unten.'
+      : 'Rückseite: normaler Vergleich, links mit rechts und oben mit unten.';
+
     if (!m) {
-      el.lrValue.textContent = el.tbValue.textContent = '–';
-      el.lrMm.textContent = el.tbMm.textContent = !s ? 'Kein Foto' : !s.lines ? 'Wird erkannt …' : 'Innenrahmen liegt außerhalb der Kartenkante';
-      el.lrEnds.textContent = el.tbEnds.textContent = '';
-      el.lrWhere.textContent = el.tbWhere.textContent = '';
-      el.lrMark.style.left = el.tbMark.style.left = '50%';
+      for (const x of axisEls) {
+        x.value.textContent = '–';
+        x.mm.textContent = !s ? 'Kein Foto' : !s.lines ? 'Wird erkannt …' : 'Innenrahmen liegt außerhalb der Kartenkante';
+        x.ends.textContent = x.where.textContent = '';
+        x.mark.style.left = '50%';
+      }
       setStatusChip('', s ? 'prüfen' : 'leer');
       renderSkew(null);
     } else {
-      const { borders: b, where } = Geo.bordersFor(m, state.mode);
-      const r = G.ratios(b);
-      const ends = Geo.endRatios(m);
-      el.lrWhere.textContent = where.lr === null ? '' : `schlechteste Stelle: ${where.lr ? 'unten' : 'oben'}`;
-      el.tbWhere.textContent = where.tb === null ? '' : `schlechteste Stelle: ${where.tb ? 'rechts' : 'links'}`;
-      el.lrValue.textContent = G.fmt(r.left);
-      el.tbValue.textContent = G.fmt(r.top);
-      el.lrMark.style.left = r.left.toFixed(2) + '%';
-      el.tbMark.style.left = r.top.toFixed(2) + '%';
+      const ax = Geo.axes(m, pairing, state.mode);
       const mmX = CARD_MM.w / m.cardWidthPx, mmY = CARD_MM.h / m.cardHeightPx;
-      el.lrMm.textContent = `Rand links ${num(b.left * mmX, 2)} mm · rechts ${num(b.right * mmX, 2)} mm`;
-      el.tbMm.textContent = `Rand oben ${num(b.top * mmY, 2)} mm · unten ${num(b.bottom * mmY, 2)} mm`;
-      el.lrEnds.textContent = `oben ${G.fmt(ends.lr[0])} · unten ${G.fmt(ends.lr[1])}`;
-      el.tbEnds.textContent = `links ${G.fmt(ends.tb[0])} · rechts ${G.fmt(ends.tb[1])}`;
+      const toMm = (side, px) => px * (Geo.isVertical(side) ? mmX : mmY);
+      ax.forEach((x, k) => {
+        const e = axisEls[k];
+        e.value.textContent = G.fmt(x.ratio);
+        e.mark.style.left = x.ratio.toFixed(2) + '%';
+        e.mm.textContent = `Rand ${SIDE_NAME[x.a]} ${num(toMm(x.a, x.wa), 2)} mm · ${SIDE_NAME[x.b]} ${num(toMm(x.b, x.wb), 2)} mm`;
+        if (opp(x.a, x.b)) {
+          // gegenüberliegende Ränder: Verhältnis an beiden Enden
+          const A = m.sides[x.a].at, B = m.sides[x.b].at;
+          const at = i => G.fmt((A[i] / (A[i] + B[i])) * 100);
+          e.ends.textContent = `${stationName(x.a, 0)} ${at(0)} · ${stationName(x.a, 1)} ${at(1)}`;
+          e.where.textContent = x.where ? `schlechteste Stelle: ${stationName(x.a, x.where[0])}` : '';
+        } else {
+          // Ränder über Eck: Spanne über alle Messstellen
+          e.ends.textContent = `je nach Messstelle ${G.fmt(x.range[0])} bis ${G.fmt(x.range[1])}`;
+          e.where.textContent = x.where
+            ? `schlechteste Stelle: ${EDGE_NAME[x.a]} ${stationName(x.a, x.where[0])}, ${EDGE_NAME[x.b]} ${stationName(x.b, x.where[1])}`
+            : '';
+        }
+      });
       if (s.manual) setStatusChip('', 'manuell angepasst');
       else if (s.confidence >= 0.75) setStatusChip('good', 'Erkennung sicher');
       else if (s.confidence >= 0.45) setStatusChip('warn', 'Linien prüfen');
@@ -398,7 +437,7 @@
     const input = {};
     for (const side of ['front', 'back']) {
       const m = measureOf(state.sides[side]);
-      if (m) input[side] = Geo.bordersFor(m, state.mode).borders;
+      if (m) input[side] = Geo.gradingBorders(Geo.axes(m, pairingFor(side), state.mode));
     }
     const res = G.evaluate(input);
     const rows = [];
@@ -568,6 +607,20 @@
     draw();
     renderResult();
   });
+
+  // Kartentyp umschalten: Standard oder e-Reader
+  for (const b of document.querySelectorAll('[data-type]')) {
+    b.addEventListener('click', () => {
+      state.cardType = b.dataset.type;
+      try { localStorage.setItem('centering-type', state.cardType); } catch (e) { /* ohne Speicher */ }
+      syncTypeButtons();
+      renderResult();
+    });
+  }
+  function syncTypeButtons() {
+    for (const b of document.querySelectorAll('[data-type]')) b.setAttribute('aria-pressed', String(b.dataset.type === state.cardType));
+  }
+  syncTypeButtons();
 
   // Wertung umschalten: Mittelwert oder schlechteste Messstelle
   for (const b of document.querySelectorAll('[data-mode]')) {

@@ -133,3 +133,33 @@ test('Wertung: schlechteste Stelle statt Mittelwert', () => {
   assert.ok(ratio(worst.borders) > ratio(mean.borders) + 1, `${ratio(worst.borders)} vs ${ratio(mean.borders)}`);
   assert.strictEqual(+worst.borders.top.toFixed(6), +mean.borders.top.toFixed(6));
 });
+
+// ---------- e-Reader: Ränder über Eck vergleichen ----------
+test('e-Reader: oben mit rechts, links mit unten', () => {
+  // Ränder: links 40, rechts 24, oben 24, unten 40 → e-Reader perfekt, Standard 62,5/37,5
+  const lines = Geo.fromRects(
+    { left: 0, right: 630, top: 0, bottom: 880 },
+    { left: 40, right: 606, top: 24, bottom: 840 }
+  );
+  const m = Geo.measure(lines);
+  const std = Geo.axes(m, 'standard', 'mean');
+  const er = Geo.axes(m, 'ereader', 'mean');
+  assert.deepStrictEqual(er.map(x => [x.a, x.b]), [['top', 'right'], ['left', 'bottom']]);
+  assert.ok(Math.abs(std[0].ratio - 62.5) < 1e-9);
+  assert.ok(Math.abs(er[0].ratio - 50) < 1e-9 && Math.abs(er[1].ratio - 50) < 1e-9);
+  const g = G.evaluate({ front: Geo.gradingBorders(er) });
+  assert.strictEqual(g.companies.psa.overall, '10');
+  assert.strictEqual(G.evaluate({ front: Geo.gradingBorders(std) }).companies.psa.overall, '8');
+});
+
+test('e-Reader: schlechteste Stelle über alle Kombinationen', () => {
+  const lines = Geo.fromRects(
+    { left: 0, right: 630, top: 0, bottom: 880 },
+    { left: 30, right: 600, top: 30, bottom: 850 }
+  );
+  lines.inner.right[1].x -= 12; // rechter Rand unten breiter
+  const m = Geo.measure(lines);
+  const [tr] = Geo.axes(m, 'ereader', 'worst');
+  assert.strictEqual(tr.where[1], 1, 'rechts unten ist die breiteste Stelle');
+  assert.ok(Math.abs(tr.ratio - tr.range[1]) < 1e-9 && Math.abs(tr.range[0] - 50) < Math.abs(tr.ratio - 50));
+});
